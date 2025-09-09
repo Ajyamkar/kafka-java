@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) {
@@ -17,7 +19,22 @@ public class Main {
             serverSocket.setReuseAddress(true);
             // Wait for connection from client.
             clientSocket = serverSocket.accept();
-            clientSocket.getOutputStream().write(new byte[]{0, 0, 0, 0, 0, 0, 0, 7});
+
+            InputStream in = clientSocket.getInputStream();
+            OutputStream out = clientSocket.getOutputStream();
+
+            DataInputStream dataInputStream = new DataInputStream(in);
+            System.out.println("dataInputStream.readInt()"+dataInputStream.readInt());
+            System.out.println("dataInputStream.readShort()"+dataInputStream.readShort());
+            System.out.println("dataInputStream.readShort()"+dataInputStream.readShort());
+            int correlationId= dataInputStream.readInt();
+
+            DataOutputStream dataOutputStream = new DataOutputStream(out);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            System.out.println("correlationId:"+correlationId);
+
+            dataOutputStream.writeInt(0);
+            dataOutputStream.writeInt(correlationId);
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
