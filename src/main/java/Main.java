@@ -25,6 +25,7 @@ public class Main {
             OutputStream out = clientSocket.getOutputStream();
 
             DataInputStream dataInputStream = new DataInputStream(in);
+            DataOutputStream dataOutputStream = new DataOutputStream(out);
 
             int messageSize = dataInputStream.readInt();
             int apiKey = dataInputStream.readShort();
@@ -36,10 +37,14 @@ public class Main {
             System.out.println("requestApiVersion: " + apiVersion);
             System.out.println("correlationId: " + correlationId);
 
-            DataOutputStream dataOutputStream = new DataOutputStream(out);
+            int errorCode = 35;
+            if(apiVersion>=0 && apiVersion<=4){
+                errorCode = 0;
+            }
 
             dataOutputStream.writeInt(0);
             dataOutputStream.writeInt(correlationId);
+            dataOutputStream.writeShort(errorCode);
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
