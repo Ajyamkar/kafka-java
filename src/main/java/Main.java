@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -24,14 +25,18 @@ public class Main {
             OutputStream out = clientSocket.getOutputStream();
 
             DataInputStream dataInputStream = new DataInputStream(in);
-            System.out.println("dataInputStream.readInt()"+dataInputStream.readInt());
-            System.out.println("dataInputStream.readShort()"+dataInputStream.readShort());
-            System.out.println("dataInputStream.readShort()"+dataInputStream.readShort());
-            int correlationId= dataInputStream.readInt();
+
+            int messageSize = dataInputStream.readInt();
+            int apiKey = dataInputStream.readShort();
+            int apiVersion = dataInputStream.readShort();
+            int correlationId = dataInputStream.readInt();
+
+            System.out.println("messageSize: " + messageSize);
+            System.out.println("requestApiKey: " + apiKey);
+            System.out.println("requestApiVersion: " + apiVersion);
+            System.out.println("correlationId: " + correlationId);
 
             DataOutputStream dataOutputStream = new DataOutputStream(out);
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            System.out.println("correlationId:"+correlationId);
 
             dataOutputStream.writeInt(0);
             dataOutputStream.writeInt(correlationId);
