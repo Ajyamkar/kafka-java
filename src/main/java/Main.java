@@ -42,9 +42,41 @@ public class Main {
                 errorCode = 0;
             }
 
+            dataOutputStream.writeInt(33); // message size
+            // Response Header v0
+            dataOutputStream.writeInt(correlationId); // correlationId
+
+            // Response body v4
+            dataOutputStream.writeShort(errorCode); // errorCode
+
+            // API Version Array
+            // Array length + 1 (I am returning three versions with min version 0, max 4)
+            dataOutputStream.write(4);
+
+            // Element 1
+            dataOutputStream.writeShort(17); // API key
+            dataOutputStream.writeShort(0); // min version
+            dataOutputStream.writeShort(4); // max version
+            dataOutputStream.write(0); // tag buffer
+
+            // Element 2
+            dataOutputStream.writeShort(18); // API key
+            dataOutputStream.writeShort(0); // min version
+            dataOutputStream.writeShort(4); // max version
+            dataOutputStream.write(0); // tag buffer
+
+            // Element 3
+            dataOutputStream.writeShort(19); // API key
+            dataOutputStream.writeShort(0); // min version
+            dataOutputStream.writeShort(4); // max version
+            dataOutputStream.write(0); // tag buffer
+
+            // throttle time
             dataOutputStream.writeInt(0);
-            dataOutputStream.writeInt(correlationId);
-            dataOutputStream.writeShort(errorCode);
+
+            // tag buffer
+            dataOutputStream.write(0);
+
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
