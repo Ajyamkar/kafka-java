@@ -1,8 +1,6 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Main {
@@ -24,69 +22,109 @@ public class Main {
             InputStream in = clientSocket.getInputStream();
             OutputStream out = clientSocket.getOutputStream();
 
-            DataInputStream dataInputStream = new DataInputStream(in);
             DataOutputStream dataOutputStream = new DataOutputStream(out);
 
-            int messageSize = dataInputStream.readInt();
-            int apiKey = dataInputStream.readShort();
-            int apiVersion = dataInputStream.readShort();
-            int correlationId = dataInputStream.readInt();
 
-            System.out.println("messageSize: " + messageSize);
-            System.out.println("requestApiKey: " + apiKey);
-            System.out.println("requestApiVersion: " + apiVersion);
-            System.out.println("correlationId: " + correlationId);
+            try (DataInputStream dataInputStream = new DataInputStream(in)) {
+                while (true) {
+                    try {
+                        System.out.println("NEW REQUEST.....");
 
-            int errorCode = 35;
-            if(apiVersion>=0 && apiVersion<=4){
-                errorCode = 0;
+                        int messageSize = dataInputStream.readInt();
+                        int apiKey = dataInputStream.readShort();
+                        int apiVersion = dataInputStream.readShort();
+                        int correlationId = dataInputStream.readInt();
+                        byte[] clientId = dataInputStream.readNBytes(11);
+                        int tagbuffer = dataInputStream.read();
+                        String requestBodyClientId = new String( dataInputStream.readNBytes(10));
+                        String requestBodyClientVersion = new String(dataInputStream.readNBytes(4));
+                        int requestBodyTagBuffer = dataInputStream.read();
+
+                        System.out.println("messageSize: " + messageSize);
+                        System.out.println("requestApiKey: " + apiKey);
+                        System.out.println("requestApiVersion: " + apiVersion);
+                        System.out.println("correlationId: " + correlationId);
+
+                        System.out.println("clientId: " + new String(clientId));
+                        System.out.println("tagbuffer: " + tagbuffer);
+                        System.out.println("requestBodyClientId: " + requestBodyClientId);
+                        System.out.println("requestBodyClientVersion: " + requestBodyClientVersion);
+                        System.out.println("requestBodyTagBuffer: "+requestBodyTagBuffer);
+
+                        ByteArrayOutputStream responseBuffer = new ByteArrayOutputStream();
+                        getResponseBody(responseBuffer, apiVersion, correlationId);
+
+                        dataOutputStream.writeInt(responseBuffer.size()); // message size
+                        dataOutputStream.write(responseBuffer.toByteArray()); // responseBody
+                        dataOutputStream.flush();
+
+                        System.out.println();
+                        System.out.println();
+                    } catch (EOFException e) {
+                        System.out.println("EOF : " + e.getMessage());
+                        System.out.println("End of file reached.");
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            dataOutputStream.writeInt(33); // message size
-            // Response Header v0
-            dataOutputStream.writeInt(correlationId); // correlationId
-
-            // Response body v4
-            dataOutputStream.writeShort(errorCode); // errorCode
-
-            // API Version Array
-            // Array length + 1 (I am returning three versions with min version 0, max 4)
-            dataOutputStream.write(4);
-
-            // Element 1
-            dataOutputStream.writeShort(17); // API key
-            dataOutputStream.writeShort(0); // min version
-            dataOutputStream.writeShort(4); // max version
-            dataOutputStream.write(0); // tag buffer
-
-            // Element 2
-            dataOutputStream.writeShort(18); // API key
-            dataOutputStream.writeShort(0); // min version
-            dataOutputStream.writeShort(4); // max version
-            dataOutputStream.write(0); // tag buffer
-
-            // Element 3
-            dataOutputStream.writeShort(19); // API key
-            dataOutputStream.writeShort(0); // min version
-            dataOutputStream.writeShort(4); // max version
-            dataOutputStream.write(0); // tag buffer
-
-            // throttle time
-            dataOutputStream.writeInt(0);
-
-            // tag buffer
-            dataOutputStream.write(0);
 
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
             try {
-                if (clientSocket != null) {
+                System.out.println("clientSocket.isClosed() =" + clientSocket.isClosed());
+                System.out.println("clientSocket.isConnected()" + clientSocket.isConnected());
+                if (clientSocket != null && clientSocket.isClosed()) {
                     clientSocket.close();
                 }
             } catch (IOException e) {
                 System.out.println("IOException: " + e.getMessage());
             }
         }
+    }
+
+    private static void getResponseBody(ByteArrayOutputStream responseBuffer, int apiVersion, int correlationId) throws IOException {
+        DataOutputStream responseBody = new DataOutputStream(responseBuffer);
+
+        int errorCode = 35;
+        if (apiVersion >= 0 && apiVersion <= 4) {
+            errorCode = 0;
+        }
+
+        // Response Header v0
+        responseBody.writeInt(correlationId); // correlationId
+
+        // Response body v4
+        responseBody.writeShort(errorCode); // errorCode
+
+        // API Version Array
+        // Array length + 1 (I am returning three versions with min version 0, max 4)
+        responseBody.write(4);
+
+        // Element 1
+        responseBody.writeShort(17); // API key
+        responseBody.writeShort(0); // min version
+        responseBody.writeShort(4); // max version
+        responseBody.write(0); // tag buffer
+
+        // Element 2
+        responseBody.writeShort(18); // API key
+        responseBody.writeShort(0); // min version
+        responseBody.writeShort(4); // max version
+        responseBody.write(0); // tag buffer
+
+        // Element 3
+        responseBody.writeShort(19); // API key
+        responseBody.writeShort(0); // min version
+        responseBody.writeShort(4); // max version
+        responseBody.write(0); // tag buffer
+
+        // throttle time
+        responseBody.writeInt(0);
+
+        // tag buffer
+        responseBody.write(0);
     }
 }
