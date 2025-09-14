@@ -4,14 +4,16 @@ import java.io.*;
 import java.net.Socket;
 
 public class KafkaBroker {
+    private final Thread thread;
     private final InputStream in;
     private final Socket clientSocket;
     private final ApiVersionsRequestV4Reader apiVersionsRequestV4Reader;
     private final LogApiVersionRequestV4Data logApiVersionRequestV4Data;
     private final ApiVersionsResponseWriter apiVersionsResponseWriter;
 
-    public KafkaBroker(Socket clientSocket) throws IOException {
+    public KafkaBroker(Socket clientSocket, Thread thread) throws IOException {
         this.clientSocket = clientSocket;
+        this.thread = thread;
         this.in = clientSocket.getInputStream();
 
         this.apiVersionsRequestV4Reader = new ApiVersionsRequestV4Reader();
@@ -24,9 +26,8 @@ public class KafkaBroker {
             processApiVersions();
         } finally {
             try {
-                System.out.println("clientSocket.isClosed() =" + clientSocket.isClosed());
-                System.out.println("clientSocket.isConnected()" + clientSocket.isConnected());
-                if (clientSocket != null && clientSocket.isClosed()) {
+                if (clientSocket != null) {
+                    System.out.println("Thread: " + thread.getName() + " clientSocket.isClosed() =" + clientSocket.isClosed());
                     clientSocket.close();
                 }
             } catch (IOException e) {
@@ -45,7 +46,7 @@ public class KafkaBroker {
                 try {
                     apiVersionsRequestV4Reader.readApiVersionsRequestV4(dataInputStream);
 
-                    logApiVersionRequestV4Data.log(this.apiVersionsRequestV4Reader.getApiVersionRequestV4());
+                    logApiVersionRequestV4Data.log(this.apiVersionsRequestV4Reader.getApiVersionRequestV4(), thread);
 
                     apiVersionsResponseWriter.sendApiVersionsResponseV4(apiVersionsRequestV4Reader.getApiVersionRequestV4());
 

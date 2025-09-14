@@ -4,8 +4,8 @@ import com.kafka.java.models.ApiVersionsRequestV4;
 
 public class LogApiVersionRequestV4Data {
 
-    public void log(ApiVersionsRequestV4 apiVersionsRequestV4) {
-        System.out.println("NEW REQUEST.....");
+    public void log(ApiVersionsRequestV4 apiVersionsRequestV4, Thread thread) {
+        System.out.println("NEW REQUEST from thread: "+thread.getName() +".....");
 
         System.out.println("messageSize: " + apiVersionsRequestV4.getMessageSize());
         System.out.println("requestApiKey: " + apiVersionsRequestV4.getApiKey());
