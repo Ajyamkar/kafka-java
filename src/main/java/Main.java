@@ -2,6 +2,9 @@ import com.kafka.java.client.CreateClientSocket;
 import com.kafka.java.server.CreateServerSocket;
 
 import java.io.*;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
     public static void main(String[] args) {
@@ -9,26 +12,26 @@ public class Main {
         System.err.println("Logs from your program will appear here!");
 
         int BrokerPort = 9092;
-        try {
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(4)) {
             CreateServerSocket serverSocket = new CreateServerSocket(BrokerPort);
-            CreateClientSocket clientSocket = new CreateClientSocket(serverSocket.getServerSocket());
-            clientSocket.setName("CreateClientSocketThread-T1");
-            System.out.println("Current Thread: "+clientSocket.getName()+" state: "+clientSocket.getState());
-            clientSocket.start();
+            while (true) {
+                System.out.println("listening...");
+                Socket clientSocket = serverSocket.getServerSocket().accept();
 
-            // Thread 2
-            CreateClientSocket clientSocket2 = new CreateClientSocket(serverSocket.getServerSocket());
-            clientSocket2.setName("CreateClientSocketThread-T2");
-            System.out.println("Current Thread: "+clientSocket2.getName()+" state: "+clientSocket2.getState());
-            clientSocket2.start();
-
-            // Thread 3
-            CreateClientSocket clientSocket3 = new CreateClientSocket(serverSocket.getServerSocket());
-            clientSocket3.setName("CreateClientSocketThread-T3");
-            System.out.println("Current Thread: "+clientSocket3.getName()+" state: "+clientSocket3.getState());
-            clientSocket3.start();
+                executor.submit(() -> {
+                    // TODO: Remove the client instance and directly call kafka broker
+                    CreateClientSocket clientSocketInstance = null;
+                    try {
+                        clientSocketInstance = new CreateClientSocket(clientSocket);
+                        clientSocketInstance.execute();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
         } catch (IOException e) {
-            System.out.println("IOException: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 }

@@ -5,23 +5,24 @@ import com.kafka.java.KafkaBroker;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-public class CreateClientSocket extends Thread {
-    private final ServerSocket serverSocket;
+public class CreateClientSocket {
+    private final Socket clientSocket;
 
-    public CreateClientSocket(ServerSocket serverSocket) throws IOException {
-        this.serverSocket = serverSocket;
+    public CreateClientSocket(Socket clientSocket) throws IOException {
+        this.clientSocket = clientSocket;
     }
 
-    @Override
-    public void run() {
+    public void execute() {
         try {
             System.out.println("Current Thread: " + Thread.currentThread().getName() + " started: " + Thread.currentThread().getState() + " and is listening for request..");
             // Wait for connection from client.
-            Socket clientSocket = this.serverSocket.accept();
 
             System.out.println("Current Thread: " + Thread.currentThread().getName() + " started: " + Thread.currentThread().getState() + " and is responding to request..");
-            KafkaBroker kafkaBroker = new KafkaBroker(clientSocket, currentThread());
+            KafkaBroker kafkaBroker = new KafkaBroker(clientSocket, Thread.currentThread());
             kafkaBroker.respondToKafkaClientRequest();
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
